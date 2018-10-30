@@ -1,40 +1,51 @@
 var resources = [],database,players = {},you,speed = 2;
 function preload(){
   login();
+  starfield = loadImage("assets/field_5.png")
 }
 
 function setup() {
   createCanvas(800, 600); 
-  imageMode("center"); 
+  imageMode("center");
+  rectMode("center"); 
   textAlign(CENTER);
   textSize(14);
+  bk = new Background(new Animation(starfield,5,1000,1000,1));
 }
 
 function draw() {
-  background(255);
   checkForNewPlayers();
-  for(var key in players){
-    players[key].player.draw();
-  }
+  var direction = "";
   if (keyIsPressed === true) {
     if (keyIsDown(UP_ARROW)) {
-      you.y-=speed;
+      you.y-=speed; 
+      direction += "down";
     }
     if (keyIsDown(DOWN_ARROW)) {
       you.y+=speed;
+      direction += "up";
     }
     if (keyIsDown(LEFT_ARROW)) {
       you.x-=speed;
+      direction += "right";
     }
     if (keyIsDown(RIGHT_ARROW)) {
       you.x+=speed;
+      direction += "left";
     }
     database.child(you.uid).update({
       "x": you.x,
       "y": you.y,
       "score":0
     })
-  } 
+  }else{
+    direction = ""
+  }
+  bk.scroll(direction);
+  for(var key in players){
+    //Draw each player relative to you
+    players[key].player.draw(players[you.uid].player);
+  }
 
 }
 function checkForNewPlayers(){
@@ -52,12 +63,70 @@ class Player{
     this.name = name;
     this.y = 0;
     this.x = 0;
-    this.theta = 0;
+    this.score = 0;
   }
-  draw(){
-    text(this.name,this.x,this.y - 30);
-    image(this.image,this.x,this.y,50,50);
+  draw(you){
+    //Determine the other players position on the screen relative to yours centered on the screen
+    var screenX = this.x - you.x + width / 2;
+    var screenY = this.y - you.y + height / 2;
+    fill("blue")
+    text(this.name,screenX,screenY - 30);
+    fill("white")
+    text(this.name,screenX-1,screenY - 30 - 1);
+    image(this.image,screenX,screenY,50,50);
   }
+}
+
+class Background{
+  constructor(image){
+    this.image = image;
+    this.width = this.image.width;
+    this.height = this.image.height;
+    this.backgroundXY = []
+    //Tile the image on a 3 x 3 grid
+    for(var i = 0; i < 9; i++){
+      this.backgroundXY.push({"x":i % 3 * this.width,"y":Math.floor(i / 3) * this.height });
+    }
+  }
+  scroll(direction){
+    var build = ""
+    for(var i = 0; i < 9; i++){
+      if(i % 3 == 0) build += "<br>"
+      build += i + " " + this.backgroundXY[i].y + " - "
+      if(direction.includes("left")){
+        this.backgroundXY[i].x-=speed;
+        if(this.backgroundXY[i].x + this.width / 2 < 0){
+          this.backgroundXY[i].x = this.backgroundXY[(i+2)%3].x + this.width ;
+          console.log("moved " + i + " " + this.backgroundXY[i].x);
+        }
+      }
+      if(direction.includes("right")){
+        this.backgroundXY[i].x+=speed;
+        if(this.backgroundXY[i].x - this.width / 2 > width){
+          this.backgroundXY[i].x = this.backgroundXY[(i+2)%3].x - this.width;
+          console.log("moved " + i + " " + this.backgroundXY[i].x);
+        }
+      }
+      if(direction.includes("up")){
+        this.backgroundXY[i].y-=speed;
+        if(this.backgroundXY[i].y + this.height / 2 < 0){
+          this.backgroundXY[i].y = this.backgroundXY[(i+2)%3].y + this.height;
+          console.log("moved " + i + " " + this.backgroundXY[i].y);
+        }
+      }
+      if(direction.includes("down")){
+        this.backgroundXY[i].y+=speed;
+        if(this.backgroundXY[i].y - this.height / 2 > height){
+          this.backgroundXY[i].y = this.backgroundXY[(i+2)%3].y - this.height;
+          console.log("moved " + i + " " + this.backgroundXY[i].y);
+        }
+      }
+      this.image.x = this.backgroundXY[i].x
+      this.image.y = this.backgroundXY[i].y
+      this.image.draw();
+    }
+    document.getElementById("scrap").innerHTML = build;
+  } 
 }
 
 function login(){
