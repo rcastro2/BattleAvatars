@@ -36,7 +36,7 @@ function draw() {
     database.child(you.uid).update({
       "x": you.x,
       "y": you.y,
-      "score":0
+      "friends":you.friends
     })
   }else{
     direction = ""
@@ -45,25 +45,30 @@ function draw() {
   for(var key in players){
     //Draw each player relative to you
     players[key].player.draw(players[you.uid].player);
+    if(players[you.uid].player.collidedWith(players[key].player) && you.uid != key && !you.friends.includes(players[key].player.name)){
+      you.friends.push(players[key].player.name);
+    }
   }
+  if(you) document.getElementById("scrap").innerHTML = you.friends.join("<br>")
 
 }
 function checkForNewPlayers(){
   while(resources.length > 0){
     var data = resources.pop()
     players[data.uid] = {
-      player:new Player(data.photo, data.name)
+      player:new Player(data.photo, data.name,data.x,data.y,data.friends)
     };
+
   }
 }
 
 class Player{
-  constructor(image,name){
+  constructor(image,name,x,y,friends){
     this.image = image;
     this.name = name;
-    this.y = 0;
-    this.x = 0;
-    this.score = 0;
+    this.x = x;
+    this.y = y;
+    this.friends = friends;
   }
   draw(you){
     //Determine the other players position on the screen relative to yours centered on the screen
@@ -74,6 +79,12 @@ class Player{
     fill("white")
     text(this.name,screenX-1,screenY - 30 - 1);
     image(this.image,screenX,screenY,50,50);
+  }
+  collidedWith(other){
+    if(dist(this.x,this.y,other.x,other.y) < 50){
+      return true;
+    }
+    return false;
   }
 }
 
@@ -89,43 +100,35 @@ class Background{
     }
   }
   scroll(direction){
-    var build = ""
     for(var i = 0; i < 9; i++){
-      if(i % 3 == 0) build += "<br>"
-      build += i + " " + this.backgroundXY[i].y + " - "
       if(direction.includes("left")){
         this.backgroundXY[i].x-=speed;
         if(this.backgroundXY[i].x + this.width / 2 < 0){
           this.backgroundXY[i].x = this.backgroundXY[(i+2)%3].x + this.width ;
-          console.log("moved " + i + " " + this.backgroundXY[i].x);
         }
       }
       if(direction.includes("right")){
         this.backgroundXY[i].x+=speed;
         if(this.backgroundXY[i].x - this.width / 2 > width){
           this.backgroundXY[i].x = this.backgroundXY[(i+2)%3].x - this.width;
-          console.log("moved " + i + " " + this.backgroundXY[i].x);
         }
       }
       if(direction.includes("up")){
         this.backgroundXY[i].y-=speed;
         if(this.backgroundXY[i].y + this.height / 2 < 0){
           this.backgroundXY[i].y = this.backgroundXY[(i+2)%3].y + this.height;
-          console.log("moved " + i + " " + this.backgroundXY[i].y);
         }
       }
       if(direction.includes("down")){
         this.backgroundXY[i].y+=speed;
         if(this.backgroundXY[i].y - this.height / 2 > height){
           this.backgroundXY[i].y = this.backgroundXY[(i+2)%3].y - this.height;
-          console.log("moved " + i + " " + this.backgroundXY[i].y);
         }
       }
       this.image.x = this.backgroundXY[i].x
       this.image.y = this.backgroundXY[i].y
       this.image.draw();
     }
-    document.getElementById("scrap").innerHTML = build;
   } 
 }
 
@@ -149,9 +152,9 @@ function login(){
               "photo":user.photoURL,
               "x": width / 2,
               "y": height / 2,
-              "score":0
+              "friends":[]
           })
-          you = {uid:user.uid,score:0,x:width/2,y:height/2};
+          you = {uid:user.uid,friends:[],x:width/2,y:height/2};
           database.on('value',function(snapshot){
             data = snapshot.val();
             for(var key in data){
@@ -159,13 +162,17 @@ function login(){
                 //If player exists update their position
                 players[key].player.x = data[key].x
                 players[key].player.y = data[key].y
-                players[key].player.score = data[key].score
+                players[key].player.friends = data[key].friends
               }else{
                 //If player doesn't exist add to the resources array to be later 
                 //added to the players object
                 resources.push({
                   uid:key,
                   name:data[key].name,
+                  x:data[key].x,
+                  y:data[key].y,
+                  friends:data[key].friends,
+                  photoURL: data[key].photo,
                   photo:loadImage(data[key].photo)
                 });
               }
