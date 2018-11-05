@@ -13,13 +13,45 @@
             display:block;
             margin:0 auto;
           }
+          #scrap{
+            float:left;
+          }
+          .icon{
+            height:20px;
+            border-radius:5px;
+            box-shadow:2px 2px 2px black;
+            margin-right:10px;
+            padding-top:2px;
+          }
+          ul{
+            list-style-type:none
+          }
+          li div{
+            padding:6px;
+            vertical-align:middle;
+            border-radius:5px;
+            box-shadow:2px 2px 2px black;
+            font-family: Arial, Helvetica, sans-serif
+          }
+          li{
+            margin:5px;
+          }
     </style>
         <script src="https://www.gstatic.com/firebasejs/5.5.5/firebase.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.0/mustache.min.js"></script>
         <script src="js/p5.min.js"></script>
         <script src="js/p5.dom.min.js"></script>
         <script src="js/p5.sound.min.js"></script>
         <script src="js/gamelib_p5.js"></script>
         <script src="sketch.js"></script>
+        <script type="text/template" id="friendsTemplate">
+          <ul >
+            {{#friends}}
+            <li>{{name}}</li>
+            {{/friends}}
+          </ul>
+
+        </script>
     </head>
     <body> 
       <div id="scrap"></div>

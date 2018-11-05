@@ -45,17 +45,32 @@ function draw() {
   for(var key in players){
     //Draw each player relative to you
     players[key].player.draw(players[you.uid].player);
-    if(players[you.uid].player.collidedWith(players[key].player) && you.uid != key && !you.friends.includes(players[key].player.name)){
-      you.friends.push(players[key].player.name);
+    if(players[you.uid].player.collidedWith(players[key].player) && you.uid != key && !you.friends.includes(key)){
+      you.friends.push(key);
     }
   }
-  if(you) document.getElementById("scrap").innerHTML = you.friends.join("<br>")
-
+  if(you) document.getElementById("scrap").innerHTML = friendList()
+  for(var key in players){
+    if(!document.getElementById(key) || you.uid == key) continue;
+    document.getElementById(key).style.backgroundColor = "white";
+    if(players[you.uid].player.collidedWith(players[key].player)){
+      document.getElementById(key).style.backgroundColor = "yellow";
+    }
+  }
+}
+function friendList(){
+  var build = "<ul id='"+you.uid+"'>"
+  for(var i = 0; i < you.friends.length; i++){
+    var friend = players[you.friends[i]];
+    build += "<li><div id='"+you.friends[i]+"'><img class='icon' src='" + friend.photo + "'>" + friend.player.name + "</div></li>"
+  }
+  return build + "</ul>"
 }
 function checkForNewPlayers(){
   while(resources.length > 0){
     var data = resources.pop()
     players[data.uid] = {
+      photo:data.photoURL,
       player:new Player(data.photo, data.name,data.x,data.y,data.friends)
     };
 
